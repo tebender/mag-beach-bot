@@ -14,10 +14,10 @@ logger = logging.getLogger()
 # begin helper functions
 def create_api():
     file = open('credentials.txt', 'r')
-    CONSUMER_KEY = file.readline()
-    CONSUMER_SECRET = file.readline()
-    ACCESS_TOKEN = file.readline()
-    ACCESS_TOKEN_SECRET = file.readline()
+    CONSUMER_KEY = file.readline().strip()
+    CONSUMER_SECRET = file.readline().strip()
+    ACCESS_TOKEN = file.readline().strip()
+    ACCESS_TOKEN_SECRET = file.readline().strip()
 
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
