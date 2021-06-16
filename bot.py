@@ -1,6 +1,5 @@
 import tweepy
 import random
-import asyncio
 from PIL import Image
 from PIL import ImageEnhance
 import os
@@ -10,6 +9,11 @@ import time
 # initialize logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+
+# initialize lyric store to prevent repeats
+last_written_index = -1
+lyric_store = [None]*12
+print(lyric_store)
 
 # begin helper functions
 def create_api():
@@ -52,7 +56,7 @@ def read_last_seen_id(file_name):
 def fry_image():
     # fetch stock photo
     rand_photo = random.choice(os.listdir('./stock-photos'))
-    logger.info(f"frying {rand_photo}")
+    logger.info(f'frying {rand_photo}')
     # fry stock-photo
     img = Image.open('./stock-photos/' + rand_photo)
     saturater = ImageEnhance.Color(img)
@@ -61,7 +65,7 @@ def fry_image():
     img = sharpener.enhance(6)
     img.save('./fried-image.jpg')
 
-
+# api interacts with tweets here
 def respond_to_tweet(api, tweet):
     # favorite tweet
     try:
@@ -70,17 +74,23 @@ def respond_to_tweet(api, tweet):
         logger.info(f'Already favorited')
     # prepare image
     fry_image()
+    # find suitable lyric
+    lyric=get_rand_lyric()
+    while lyric in lyric_store:
+        lyric=get_rand_lyric()
+        print(lyric)
+    update_lyric_store(lyric)
     # send tweet
     api.update_with_media(
         './fried-image.jpg',
-        status=get_rand_lyric(),
+        status=lyric,
         in_reply_to_status_id=tweet.id,
         auto_populate_reply_metadata=True
     )
 
 
 def check_mentions(api, last_seen_id):
-    logger.info('Retrieving mentions')
+    logger.info(f'Retrieving mentions')
     new_last_seen_id = last_seen_id
     for tweet in tweepy.Cursor(api.mentions_timeline, since_id=last_seen_id).items():
         # update id
@@ -95,20 +105,20 @@ def check_mentions(api, last_seen_id):
         respond_to_tweet(api, tweet)
     return new_last_seen_id
 
-
+# api interacts with followers here
 def follow_followers(api):
-    logger.info("Retrieving and following followers")
+    logger.info(f'Retrieving and following followers')
     for follower in tweepy.Cursor(api.followers).items():
         if not follower.following:
-            logger.info(f"Following {follower.name}")
+            logger.info(f'Following {follower.name}')
             try:
                 follower.follow()
             except:
-                logger.info(f"Already following {follower.name}")
+                logger.info(f'Already following {follower.name}')
 
 
 def check_mag_tweets(api, last_seen_id):
-    logger.info('Retrieving magazine beaches tweets')
+    logger.info(f'Retrieving magazine beaches tweets')
     new_last_seen_id = last_seen_id
     for tweet in tweepy.Cursor(api.user_timeline, id='@magazinebeans', since_id=last_seen_id, include_rts=False, exclude_replies=True).items():
         # update id
@@ -117,8 +127,14 @@ def check_mag_tweets(api, last_seen_id):
         respond_to_tweet(api, tweet)
     return new_last_seen_id
 
-# end helper functions
+def update_lyric_store(lyric):
+    logger.info(f'Updating lyric_store')
+    global last_written_index 
+    last_written_index += 1
+    last_written_index = last_written_index % 12
+    lyric_store[last_written_index] = lyric
 
+# end helper functions
 
 def main():
     api = create_api()
