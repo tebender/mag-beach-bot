@@ -86,13 +86,12 @@ def respond_to_tweet(api, tweet):
         lyric=get_rand_lyric()
     update_store('lyric', lyric)
     # send tweet
-    logger.info(f'tweeting!')
-    # api.update_with_media(
-    #     './fried-image.jpg',
-    #     status=lyric,
-    #     in_reply_to_status_id=tweet.id,
-    #     auto_populate_reply_metadata=True
-    # )
+    api.update_with_media(
+        './fried-image.jpg',
+        status=lyric,
+        in_reply_to_status_id=tweet.id,
+        auto_populate_reply_metadata=True
+    )
 
 
 def check_mentions(api, last_seen_id):
