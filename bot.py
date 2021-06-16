@@ -10,10 +10,12 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
-# initialize lyric store to prevent repeats
-last_written_index = -1
+# initialize lyric and photo store to prevent repeats
+last_lyric_index = -1
 lyric_store = [None]*12
-print(lyric_store)
+
+last_photo_index = -1
+photo_store = [None]*12
 
 # begin helper functions
 def create_api():
@@ -54,11 +56,15 @@ def read_last_seen_id(file_name):
 
 
 def fry_image():
-    # fetch stock photo
-    rand_photo = random.choice(os.listdir('./stock-photos'))
-    logger.info(f'frying {rand_photo}')
+    # fetch suitable stock photo
+    photo = random.choice(os.listdir('./stock-photos'))
+    while photo in photo_store:
+        photo=random.choice(os.listdir('./stock-photos'))
+    update_store('photo', photo)
+    logger.info(f'frying {photo}')
+
     # fry stock-photo
-    img = Image.open('./stock-photos/' + rand_photo)
+    img = Image.open('./stock-photos/' + photo)
     saturater = ImageEnhance.Color(img)
     img = saturater.enhance(6)
     sharpener = ImageEnhance.Sharpness(img)
@@ -78,15 +84,15 @@ def respond_to_tweet(api, tweet):
     lyric=get_rand_lyric()
     while lyric in lyric_store:
         lyric=get_rand_lyric()
-        print(lyric)
-    update_lyric_store(lyric)
+    update_store('lyric', lyric)
     # send tweet
-    api.update_with_media(
-        './fried-image.jpg',
-        status=lyric,
-        in_reply_to_status_id=tweet.id,
-        auto_populate_reply_metadata=True
-    )
+    logger.info(f'tweeting!')
+    # api.update_with_media(
+    #     './fried-image.jpg',
+    #     status=lyric,
+    #     in_reply_to_status_id=tweet.id,
+    #     auto_populate_reply_metadata=True
+    # )
 
 
 def check_mentions(api, last_seen_id):
@@ -127,12 +133,19 @@ def check_mag_tweets(api, last_seen_id):
         respond_to_tweet(api, tweet)
     return new_last_seen_id
 
-def update_lyric_store(lyric):
-    logger.info(f'Updating lyric_store')
-    global last_written_index 
-    last_written_index += 1
-    last_written_index = last_written_index % 12
-    lyric_store[last_written_index] = lyric
+def update_store(store, value):
+    logger.info(f'Updating {store}_store')
+    if store == 'lyric':
+        global last_lyric_index 
+        last_lyric_index += 1
+        last_lyric_index = last_lyric_index % 12
+        lyric_store[last_lyric_index] = value
+    else:
+        global last_photo_index 
+        last_photo_index += 1
+        last_photo_index = last_photo_index % 12
+        photo_store[last_photo_index] = value
+
 
 # end helper functions
 
