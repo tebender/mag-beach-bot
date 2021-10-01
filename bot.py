@@ -40,6 +40,7 @@ def get_rand_lyric():
     while (lyric == '' or lyric == '----'):
         r = random.randrange(len(lines))
         lyric = lines[r].strip().lower()
+    file.close()
     return lyric
 
 
