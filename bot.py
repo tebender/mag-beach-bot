@@ -127,9 +127,7 @@ def main():
     while True:
         follow_followers(api)
         last_seen_mention_id = check_mentions(api, last_seen_mention_id)
-        last_seen_mag_id = check_mag_tweets(api, last_seen_mag_id)
         write_last_seen_id('last-seen-mention-id.txt', last_seen_mention_id)
-        write_last_seen_id('last-seen-mag-id.txt', last_seen_mag_id)
         logger.info('Waiting...')
         time.sleep(60)
 
